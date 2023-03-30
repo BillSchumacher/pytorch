@@ -60,9 +60,7 @@ class S3Client:
 
 
 def gen_abtest_config(control: str, treatment: str, models: List[str]) -> str:
-    d = {}
-    d["control"] = control
-    d["treatment"] = treatment
+    d = {"control": control, "treatment": treatment}
     config = ABTEST_CONFIG_TEMPLATE.format(**d)
     if models == ["ALL"]:
         return config + "\n"
@@ -98,12 +96,11 @@ def deploy_torchbench_config(
 
 def get_valid_models(torchbench_path: str) -> List[str]:
     benchmark_path = os.path.join(torchbench_path, "torchbenchmark", "models")
-    valid_models = [
+    return [
         model
         for model in os.listdir(benchmark_path)
         if os.path.isdir(os.path.join(benchmark_path, model))
     ]
-    return valid_models
 
 
 def get_valid_userbenchmarks(torchbench_path: str) -> List[str]:
@@ -131,8 +128,9 @@ def extract_models_from_pr(
     pr_list = []
     with open(prbody_file, "r") as pf:
         lines = map(lambda x: x.strip(), pf.read().splitlines())
-        magic_lines = list(filter(lambda x: x.startswith(MAGIC_PREFIX), lines))
-        if magic_lines:
+        if magic_lines := list(
+            filter(lambda x: x.startswith(MAGIC_PREFIX), lines)
+        ):
             # Only the first magic line will be recognized.
             pr_list = list(
                 map(lambda x: x.strip(), magic_lines[0][len(MAGIC_PREFIX) :].split(","))
@@ -159,10 +157,9 @@ def find_torchbench_branch(prbody_file: str) -> str:
     branch_name: str = ""
     with open(prbody_file, "r") as pf:
         lines = map(lambda x: x.strip(), pf.read().splitlines())
-        magic_lines = list(
+        if magic_lines := list(
             filter(lambda x: x.startswith(MAGIC_TORCHBENCH_PREFIX), lines)
-        )
-        if magic_lines:
+        ):
             # Only the first magic line will be recognized.
             branch_name = magic_lines[0][len(MAGIC_TORCHBENCH_PREFIX) :].strip()
     # If not specified, use main as the default branch

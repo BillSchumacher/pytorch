@@ -31,17 +31,15 @@ def set_workflow_job_status(
 
 class TestChecks:
     def make_test_checks(self) -> List[Dict[str, Any]]:
-        workflow_checks = []
-        for i in range(len(workflowNames)):
-            workflow_checks.append(
-                WorkflowCheck(
-                    workflowName=workflowNames[i],
-                    name="test/job",
-                    jobName="job",
-                    conclusion="success",
-                )._asdict()
-            )
-        return workflow_checks
+        return [
+            WorkflowCheck(
+                workflowName=workflowNames[i],
+                name="test/job",
+                jobName="job",
+                conclusion="success",
+            )._asdict()
+            for i in range(len(workflowNames))
+        ]
 
 
 class TestPrintCommits(TestCase):

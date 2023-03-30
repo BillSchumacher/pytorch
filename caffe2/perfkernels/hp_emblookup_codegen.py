@@ -59,7 +59,7 @@ def unroll(uf, IndexType, InType, OutType, use_weights, isa, fused, use_offsets)
         return code
 
     code = []
-    code.append("    // unrolling " + str(uf) + " times")
+    code.append(f"    // unrolling {str(uf)} times")
 
     if use_offsets:
         code.append(
@@ -74,10 +74,10 @@ def unroll(uf, IndexType, InType, OutType, use_weights, isa, fused, use_offsets)
             + " rangeIndex = 0; rangeIndex < output_size; ++rangeIndex) {"
         )
 
-    code.append("      " + OutType + "* op = &out[rangeIndex * block_size];")
-    for i in range(0, uf):
+    code.append(f"      {OutType}* op = &out[rangeIndex * block_size];")
+    for i in range(uf):
         j = 8 * i
-        code.append("      __m256 vop" + str(j) + " = _mm256_setzero_ps();")
+        code.append(f"      __m256 vop{str(j)} = _mm256_setzero_ps();")
 
     # inner loop
     if use_offsets:
@@ -105,7 +105,7 @@ def unroll(uf, IndexType, InType, OutType, use_weights, isa, fused, use_offsets)
             + IndexType
             + " start = dataInd; dataInd < start + lengths[rangeIndex];\n           ++dataInd) {"  # noqa
         )
-    code.append("        const " + IndexType + " idx = indices[dataInd];")
+    code.append(f"        const {IndexType} idx = indices[dataInd];")
     code.append(
         "        if (idx < 0 || idx >= data_size) {\n"
         + "          return false;\n"
@@ -113,9 +113,9 @@ def unroll(uf, IndexType, InType, OutType, use_weights, isa, fused, use_offsets)
     )
 
     if InType == "uint8_t":
-        code.append("        " + OutType + " wgt = 1.f;")
+        code.append(f"        {OutType} wgt = 1.f;")
         code.append("        // NOLINTNEXTLINE(cppcoreguidelines-init-variables)")
-        code.append("        " + OutType + " bio;")
+        code.append(f"        {OutType} bio;")
         code.append("        if (weights) {")
         code.append(
             "          wgt = weights[IS_WEIGHT_POSITIONAL ? (dataInd - start) : dataInd];"  # noqa
@@ -133,7 +133,7 @@ def unroll(uf, IndexType, InType, OutType, use_weights, isa, fused, use_offsets)
             code.append("        wgt = wgt * scale_bias[2 * idx];")
         code.append("        __m256 vbio = _mm256_set1_ps(bio);")
     else:
-        code.append("        " + OutType + " wgt = 1.f;")
+        code.append(f"        {OutType} wgt = 1.f;")
         code.append("        if (weights) {")
         code.append(
             "          wgt = weights[IS_WEIGHT_POSITIONAL ? (dataInd - start) : dataInd];"  # noqa
@@ -151,7 +151,7 @@ def unroll(uf, IndexType, InType, OutType, use_weights, isa, fused, use_offsets)
             IndexType
         )
     )
-    code.append("        const " + IndexType + " idx_pref_T0 = indices[next_T0];")
+    code.append(f"        const {IndexType} idx_pref_T0 = indices[next_T0];")
     code.append(
         "        if (idx_pref_T0 < 0 || idx_pref_T0 >= data_size) {\n"
         + "          return false;\n"
@@ -163,7 +163,7 @@ def unroll(uf, IndexType, InType, OutType, use_weights, isa, fused, use_offsets)
         "&input[idx_pref_T0 * fused_block_size];".format(InType)
     )
 
-    for i in range(0, uf):
+    for i in range(uf):
         j = 8 * i
         cachelinesize = 64
         byteoffset = sizeof[InType] * j
@@ -175,16 +175,16 @@ def unroll(uf, IndexType, InType, OutType, use_weights, isa, fused, use_offsets)
         code.append("      if (!normalize_by_lengths || length == 0) {")
     else:
         code.append("      if (!normalize_by_lengths || lengths[rangeIndex] == 0) {")
-    for i in range(0, uf):
+    for i in range(uf):
         j = 8 * i
-        code.append("        _mm256_storeu_ps(&op[" + str(j) + "], vop" + str(j) + ");")
+        code.append(f"        _mm256_storeu_ps(&op[{str(j)}], vop{str(j)});")
     code.append("      } else {")
     # inv of length
     if use_offsets:
         code.append("        __m256 vlen_inv = _mm256_set1_ps(1.0f / length);")
     else:
         code.append("        __m256 vlen_inv = _mm256_set1_ps(1.0f / lengths[rangeIndex]);")
-    for i in range(0, uf):
+    for i in range(uf):
         j = 8 * i
         code.append(
             "        _mm256_storeu_ps(&op["
@@ -272,7 +272,7 @@ def generic(IndexType, InType, OutType, use_weights, isa, fused, use_offsets):
             + " rangeIndex = 0; rangeIndex < output_size; ++rangeIndex) {"
         )
 
-    code.append("      " + OutType + "* op = &out[rangeIndex * block_size];")
+    code.append(f"      {OutType}* op = &out[rangeIndex * block_size];")
 
     # initialize to 0
     code.append("      int64_t j = 0;")
@@ -309,7 +309,7 @@ def generic(IndexType, InType, OutType, use_weights, isa, fused, use_offsets):
             + IndexType
             + " start = dataInd; dataInd < start + lengths[rangeIndex];\n           ++dataInd) {"  # noqa
         )
-    code.append("        const " + IndexType + " idx = indices[dataInd];")
+    code.append(f"        const {IndexType} idx = indices[dataInd];")
     code.append(
         "        if (idx < 0 || idx >= data_size) {\n"
         + "          return false;\n"
@@ -317,9 +317,9 @@ def generic(IndexType, InType, OutType, use_weights, isa, fused, use_offsets):
     )
 
     if InType == "uint8_t":
-        code.append("        " + OutType + " wgt = 1.f;")
+        code.append(f"        {OutType} wgt = 1.f;")
         code.append("        // NOLINTNEXTLINE(cppcoreguidelines-init-variables)")
-        code.append("        " + OutType + " bio;")
+        code.append(f"        {OutType} bio;")
         code.append("        if (weights) {")
         code.append(
             "          wgt = weights[IS_WEIGHT_POSITIONAL ? (dataInd - start) : dataInd];"  # noqa
@@ -337,7 +337,7 @@ def generic(IndexType, InType, OutType, use_weights, isa, fused, use_offsets):
             code.append("        wgt = wgt * scale_bias[2 * idx];")
         code.append("        __m256 vbio = _mm256_set1_ps(bio);")
     else:
-        code.append("        " + OutType + " wgt = 1.f;")
+        code.append(f"        {OutType} wgt = 1.f;")
         code.append("        if (weights) {")
         code.append(
             "          wgt = weights[IS_WEIGHT_POSITIONAL ? (dataInd - start) : dataInd];"  # noqa
@@ -355,7 +355,7 @@ def generic(IndexType, InType, OutType, use_weights, isa, fused, use_offsets):
             IndexType
         )
     )
-    code.append("        const " + IndexType + " idx_pref_T0 = indices[next_T0];")
+    code.append(f"        const {IndexType} idx_pref_T0 = indices[next_T0];")
     code.append(
         "        if (idx_pref_T0 < 0 || idx_pref_T0 >= data_size) {\n"
         + "          return false;\n"
